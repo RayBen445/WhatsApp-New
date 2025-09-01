@@ -19,6 +19,7 @@ const pino = require('pino');
 const fs = require('fs-extra');
 const express = require('express');
 const cors = require('cors');
+const qrcode = require('qrcode-terminal');
 
 // Import our modules
 const config = require('./config/settings');
@@ -152,7 +153,6 @@ class CoolShotWhatsAppBot {
     this.sock = makeWASocket({
       version,
       logger: pino({ level: 'silent' }),
-      printQRInTerminal: true, // Enable QR code display in terminal
       auth: state,
       browser: ['Cool Shot AI', 'Chrome', '1.0.0'],
       generateHighQualityLinkPreview: true,
@@ -237,8 +237,18 @@ Ready to assist users! 🎉`
 
       // Handle QR code updates (for terminal display)
       if (qr) {
-        logger.system('QR code updated - displayed in terminal');
-        console.log('\n📷 QR CODE UPDATED - Scan the QR code above OR use pairing code below!');
+        logger.system('QR code updated - displaying in terminal');
+        
+        console.log('\n📷 QR CODE FOR WHATSAPP LOGIN:');
+        console.log('='.repeat(50));
+        
+        // Display QR code in terminal
+        qrcode.generate(qr, { small: true }, (qrString) => {
+          console.log(qrString);
+          console.log('='.repeat(50));
+        });
+        
+        console.log('📱 Scan the QR code above with WhatsApp OR use pairing code below!\n');
         
         // Also show pairing code option when QR code is displayed
         try {
