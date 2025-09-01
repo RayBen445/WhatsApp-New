@@ -9,14 +9,12 @@
 
 const { 
   default: makeWASocket, 
-  useSingleFileAuthState, 
+  useMultiFileAuthState, 
   DisconnectReason,
   fetchLatestBaileysVersion,
-  makeInMemoryStore,
   isJidBroadcast,
   isJidGroup
 } = require('@whiskeysockets/baileys');
-const { Boom } = require('@hapi/boom');
 const pino = require('pino');
 const fs = require('fs-extra');
 const express = require('express');
@@ -35,7 +33,6 @@ const ToolsHandler = require('./handlers/toolsHandler');
 class CoolShotWhatsAppBot {
   constructor() {
     this.sock = null;
-    this.store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
     
     // Initialize managers and handlers
     this.userManager = new UserManager();
@@ -95,7 +92,7 @@ class CoolShotWhatsAppBot {
 
   // Start WhatsApp connection
   async startWhatsApp() {
-    const { state, saveState } = useSingleFileAuthState(config.files.sessions);
+    const { state, saveCreds } = await useMultiFileAuthState(config.files.sessions);
     const { version, isLatest } = await fetchLatestBaileysVersion();
     
     logger.system('Using WA version', { version, isLatest });
@@ -110,39 +107,12 @@ class CoolShotWhatsAppBot {
       markOnlineOnConnect: true
     });
 
-    // Store management
-    this.store.bind(this.sock.ev);
-
     // Save authentication state
-    this.sock.ev.on('creds.update', saveState);
+    this.sock.ev.on('creds.update', saveCreds);
 
     // Handle connection updates
     this.sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
-      
-      if (qr) {
-        // Generate and show pairing code instead of QR
-        try {
-          const phoneNumber = config.admin.adminNumber; // Admin's phone number
-          const pairingCode = await this.sock.requestPairingCode(phoneNumber);
-          logger.auth('Pairing Code Generated', { 
-            phoneNumber, 
-            pairingCode,
-            instructions: 'Open WhatsApp > Linked Devices > Link a Device > Enter this code'
-          });
-          
-          console.log('\n🔗 PAIRING CODE:', pairingCode);
-          console.log('📱 Phone Number:', phoneNumber);
-          console.log('📋 Instructions:');
-          console.log('   1. Open WhatsApp on your phone');
-          console.log('   2. Go to Settings > Linked Devices');
-          console.log('   3. Tap "Link a Device"');
-          console.log('   4. Tap "Link with phone number instead"');
-          console.log('   5. Enter the pairing code above\n');
-        } catch (error) {
-          logger.error('Failed to generate pairing code', { error: error.message });
-        }
-      }
 
       if (connection === 'close') {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -150,6 +120,36 @@ class CoolShotWhatsAppBot {
         
         if (shouldReconnect) {
           setTimeout(() => this.startWhatsApp(), 3000);
+        }
+      } else if (connection === 'connecting') {
+        logger.system('Connecting to WhatsApp...');
+        
+        // Generate pairing code when connecting for the first time
+        if (!this.sock.authState.creds.registered) {
+          try {
+            // Wait a bit for the connection to stabilize
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const phoneNumber = config.admin.adminNumber; // Admin's phone number
+            const pairingCode = await this.sock.requestPairingCode(phoneNumber);
+            
+            logger.auth('Pairing Code Generated', { 
+              phoneNumber, 
+              pairingCode,
+              instructions: 'Open WhatsApp > Linked Devices > Link a Device > Enter this code'
+            });
+            
+            console.log('\n🔗 PAIRING CODE:', pairingCode);
+            console.log('📱 Phone Number:', phoneNumber);
+            console.log('📋 Instructions:');
+            console.log('   1. Open WhatsApp on your phone');
+            console.log('   2. Go to Settings > Linked Devices');
+            console.log('   3. Tap "Link a Device"');
+            console.log('   4. Tap "Link with phone number instead"');
+            console.log('   5. Enter the pairing code above\n');
+          } catch (error) {
+            logger.error('Failed to generate pairing code', { error: error.message });
+          }
         }
       } else if (connection === 'open') {
         logger.auth('WhatsApp connection established successfully!');
