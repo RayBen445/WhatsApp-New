@@ -96,7 +96,7 @@ class CoolShotWhatsAppBot {
     const { version, isLatest } = await fetchLatestBaileysVersion();
     
     logger.system('Using WA version', { version, isLatest });
-
+    
     this.sock = makeWASocket({
       version,
       logger: pino({ level: 'silent' }),
@@ -112,25 +112,33 @@ class CoolShotWhatsAppBot {
 
     // Handle connection updates
     this.sock.ev.on('connection.update', async (update) => {
-      const { connection, lastDisconnect, qr } = update;
+      const { connection, lastDisconnect, isNewLogin } = update;
 
       if (connection === 'close') {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-        logger.system('Connection closed', { shouldReconnect });
+        logger.system('Connection closed', { 
+          shouldReconnect,
+          reason: lastDisconnect?.error?.output?.statusCode 
+        });
         
         if (shouldReconnect) {
           setTimeout(() => this.startWhatsApp(), 3000);
         }
       } else if (connection === 'connecting') {
         logger.system('Connecting to WhatsApp...');
+      } else if (connection === 'open') {
+        logger.system('WhatsApp connection opened');
         
-        // Generate pairing code when connecting for the first time
-        if (!this.sock.authState.creds.registered) {
+        // Check if we need to generate pairing code
+        if (isNewLogin) {
           try {
-            // Wait a bit for the connection to stabilize
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            const phoneNumber = config.connection.phoneNumber;
+            logger.system('New login detected, requesting pairing code...', { phoneNumber });
             
-            const phoneNumber = config.connection.phoneNumber; // Connection phone number
+            // Wait a moment for connection to stabilize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Request pairing code for the phone number
             const pairingCode = await this.sock.requestPairingCode(phoneNumber);
             
             logger.auth('Pairing Code Generated', { 
@@ -147,11 +155,16 @@ class CoolShotWhatsAppBot {
             console.log('   3. Tap "Link a Device"');
             console.log('   4. Tap "Link with phone number instead"');
             console.log('   5. Enter the pairing code above\n');
+            
+            return; // Don't proceed with other actions until paired
           } catch (error) {
-            logger.error('Failed to generate pairing code', { error: error.message });
+            logger.error('Failed to generate pairing code', { 
+              error: error.message,
+              stack: error.stack
+            });
           }
         }
-      } else if (connection === 'open') {
+        
         logger.auth('WhatsApp connection established successfully!');
         
         // Send startup notification to admin
