@@ -21,7 +21,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "^6.7.8",
+    "@whiskeysockets/baileys": "^6.7.19",
     "axios": "^1.10.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
@@ -30,6 +30,7 @@
     "mime-types": "^2.1.35",
     "pino": "^9.0.0",
     "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.34.3",
     "winston": "^3.11.0"
   },
   "devDependencies": {

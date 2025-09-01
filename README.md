@@ -6,6 +6,7 @@ A multi-role intelligent assistant WhatsApp bot powered by AI endpoints with sup
 
 🤖 **Multi-Role AI Assistant** - Choose from 100+ expert roles (Mathematician, Doctor, Developer, etc.)  
 🌍 **15+ Language Support** - Communicate in your preferred language  
+🔗 **Dual Login Support** - Connect via QR code OR pairing code - your choice!  
 📊 **Advanced Analytics** - User activity tracking and statistics  
 🛡️ **Admin System** - Comprehensive admin panel with user management  
 📢 **Broadcast Messaging** - Send messages to all users  
@@ -66,21 +67,40 @@ The bot recognizes **2348075614248** as the primary admin with full management p
    # Edit .env with your settings (optional)
    ```
 
+   **Key Configuration Options:**
+   - `AI_API_KEY` - API key for AI services (default: "gifted" for free tier)
+   - `PHONE_NUMBER` - WhatsApp number to connect the bot to (format: country code + number without + symbol)
+   - `PORT` - Server port (default: 3000)
+   - `LOG_LEVEL` - Logging level (default: info)
+
 4. **Start the bot**
    ```bash
    npm start
    ```
 
-5. **Link WhatsApp Account**
-   - The bot will generate a pairing code and display it in the console
+5. **Link WhatsApp Account - TWO METHODS AVAILABLE**
+
+   When you start the bot, you'll see both login options in the terminal:
+
+   **Method 1: QR Code (Recommended)**
+   - A QR code will be displayed in the terminal
+   - Open WhatsApp on your phone
+   - Go to Settings → Linked Devices
+   - Tap "Link a Device"
+   - Scan the QR code from your terminal
+
+   **Method 2: Pairing Code**
+   - A pairing code will be generated and displayed in the terminal
    - Open WhatsApp on your phone
    - Go to Settings → Linked Devices
    - Tap "Link a Device" → "Link with phone number instead"  
-   - Enter the pairing code from the console
+   - Enter the pairing code from the terminal
+
+   💡 **You can use EITHER method** - both will work seamlessly!
 
 ### Katabump Deployment
 
-This bot is optimized for **Katabump** deployment with zero configuration required.
+This bot is optimized for **Katabump** deployment with zero configuration required and **dual login support** (QR code + pairing code).
 
 #### Quick Deploy to Katabump
 
@@ -99,10 +119,21 @@ This bot is optimized for **Katabump** deployment with zero configuration requir
      - **Port:** Auto-detected (3000 by default)
    - No additional configuration needed!
 
-3. **Link WhatsApp**
+3. **Link WhatsApp Account - DUAL LOGIN SUPPORT**
+
+   The bot supports both QR code and pairing code methods:
+
+   **QR Code Method (Recommended):**
+   - Check Katabump deployment logs
+   - A QR code will be displayed in the logs
+   - Scan the QR code with WhatsApp on your phone
+
+   **Pairing Code Method:**
    - Check Katabump deployment logs for the pairing code
    - Use the pairing code to link your WhatsApp account
-   - The bot will send a confirmation message when connected
+   - Go to WhatsApp → Settings → Linked Devices → Link with phone number
+
+   The bot will send a confirmation message when connected
 
 #### Environment Variables (Optional)
 

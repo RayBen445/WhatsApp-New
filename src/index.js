@@ -19,6 +19,7 @@ const pino = require('pino');
 const fs = require('fs-extra');
 const express = require('express');
 const cors = require('cors');
+const qrcode = require('qrcode-terminal');
 
 // Import our modules
 const config = require('./config/settings');
@@ -90,8 +91,60 @@ class CoolShotWhatsAppBot {
     }
   }
 
+  // Display pairing code information in a nice format
+  displayPairingCodeInfo(pairingCode, phoneNumber) {
+    console.log('\n' + '='.repeat(60));
+    console.log('🔗 WHATSAPP BOT - DUAL LOGIN OPTIONS AVAILABLE');
+    console.log('='.repeat(60));
+    console.log('');
+    console.log('📱 OPTION 1: PAIRING CODE METHOD');
+    console.log('   Pairing Code:', pairingCode);
+    console.log('   Phone Number:', phoneNumber);
+    console.log('   Instructions:');
+    console.log('   1. Open WhatsApp on your phone');
+    console.log('   2. Go to Settings → Linked Devices');
+    console.log('   3. Tap "Link a Device"');
+    console.log('   4. Tap "Link with phone number instead"');
+    console.log('   5. Enter the pairing code above');
+    console.log('');
+    console.log('📷 OPTION 2: QR CODE METHOD');
+    console.log('   A QR code should be displayed above this message.');
+    console.log('   Instructions:');
+    console.log('   1. Open WhatsApp on your phone');
+    console.log('   2. Go to Settings → Linked Devices');
+    console.log('   3. Tap "Link a Device"');
+    console.log('   4. Scan the QR code displayed above');
+    console.log('');
+    console.log('💡 You can use EITHER method - both will work!');
+    console.log('='.repeat(60) + '\n');
+  }
+
+  // Display connection instructions when bot starts
+  displayConnectionInstructions() {
+    console.log('\n' + '='.repeat(60));
+    console.log('🚀 COOL SHOT AI WHATSAPP BOT - STARTING UP');
+    console.log('='.repeat(60));
+    console.log('');
+    console.log('📱 TWO LOGIN METHODS AVAILABLE:');
+    console.log('');
+    console.log('🔗 METHOD 1: PAIRING CODE');
+    console.log('   - A pairing code will be generated automatically');
+    console.log('   - Use it to link your WhatsApp account');
+    console.log('');
+    console.log('📷 METHOD 2: QR CODE');
+    console.log('   - A QR code will be displayed in the terminal');
+    console.log('   - Scan it with your WhatsApp app');
+    console.log('');
+    console.log('⚡ Bot will work seamlessly with either method!');
+    console.log('🌐 Katabump deployment ready!');
+    console.log('='.repeat(60) + '\n');
+  }
+
   // Start WhatsApp connection
   async startWhatsApp() {
+    // Display connection instructions
+    this.displayConnectionInstructions();
+    
     const { state, saveCreds } = await useMultiFileAuthState(config.files.sessions);
     const { version, isLatest } = await fetchLatestBaileysVersion();
     
@@ -100,7 +153,6 @@ class CoolShotWhatsAppBot {
     this.sock = makeWASocket({
       version,
       logger: pino({ level: 'silent' }),
-      printQRInTerminal: false, // We'll use pairing code instead
       auth: state,
       browser: ['Cool Shot AI', 'Chrome', '1.0.0'],
       generateHighQualityLinkPreview: true,
@@ -112,7 +164,7 @@ class CoolShotWhatsAppBot {
 
     // Handle connection updates
     this.sock.ev.on('connection.update', async (update) => {
-      const { connection, lastDisconnect, isNewLogin } = update;
+      const { connection, lastDisconnect, isNewLogin, qr } = update;
 
       if (connection === 'close') {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
@@ -129,11 +181,11 @@ class CoolShotWhatsAppBot {
       } else if (connection === 'open') {
         logger.system('WhatsApp connection opened');
         
-        // Check if we need to generate pairing code
+        // For new logins, also offer pairing code option
         if (isNewLogin) {
           try {
             const phoneNumber = config.connection.phoneNumber;
-            logger.system('New login detected, requesting pairing code...', { phoneNumber });
+            logger.system('New login detected, providing pairing code option...', { phoneNumber });
             
             // Wait a moment for connection to stabilize
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -147,39 +199,64 @@ class CoolShotWhatsAppBot {
               instructions: 'Open WhatsApp > Linked Devices > Link a Device > Enter this code'
             });
             
-            console.log('\n🔗 PAIRING CODE:', pairingCode);
-            console.log('📱 Phone Number:', phoneNumber);
-            console.log('📋 Instructions:');
-            console.log('   1. Open WhatsApp on your phone');
-            console.log('   2. Go to Settings > Linked Devices');
-            console.log('   3. Tap "Link a Device"');
-            console.log('   4. Tap "Link with phone number instead"');
-            console.log('   5. Enter the pairing code above\n');
+            // Display both options
+            this.displayPairingCodeInfo(pairingCode, phoneNumber);
             
-            return; // Don't proceed with other actions until paired
           } catch (error) {
             logger.error('Failed to generate pairing code', { 
               error: error.message,
               stack: error.stack
             });
           }
-        }
-        
-        logger.auth('WhatsApp connection established successfully!');
-        
-        // Send startup notification to admin
-        try {
-          await this.sock.sendMessage(config.admin.primaryAdmin, {
-            text: `🚀 *Cool Shot AI is Online!*
+        } else {
+          logger.auth('WhatsApp connection established successfully!');
+          
+          console.log('\n' + '✅'.repeat(20));
+          console.log('🎉 CONNECTION SUCCESSFUL!');
+          console.log('📱 WhatsApp bot is now ONLINE and ready!');
+          console.log('🤖 Cool Shot AI is active and waiting for messages...');
+          console.log('✅'.repeat(20) + '\n');
+          
+          // Send startup notification to admin
+          try {
+            await this.sock.sendMessage(config.admin.primaryAdmin, {
+              text: `🚀 *Cool Shot AI is Online!*
 
 ✅ WhatsApp connection established
 🤖 Bot version: ${config.bot.version}
 ⏰ Started at: ${new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}
+🔗 Connected using dual login support (QR + Pairing Code)
 
 Ready to assist users! 🎉`
-          });
+            });
+          } catch (error) {
+            logger.warn('Could not send startup notification to admin');
+          }
+        }
+      }
+
+      // Handle QR code updates (for terminal display)
+      if (qr) {
+        logger.system('QR code updated - displaying in terminal');
+        
+        console.log('\n📷 QR CODE FOR WHATSAPP LOGIN:');
+        console.log('='.repeat(50));
+        
+        // Display QR code in terminal
+        qrcode.generate(qr, { small: true }, (qrString) => {
+          console.log(qrString);
+          console.log('='.repeat(50));
+        });
+        
+        console.log('📱 Scan the QR code above with WhatsApp OR use pairing code below!\n');
+        
+        // Also show pairing code option when QR code is displayed
+        try {
+          const phoneNumber = config.connection.phoneNumber;
+          const pairingCode = await this.sock.requestPairingCode(phoneNumber);
+          this.displayPairingCodeInfo(pairingCode, phoneNumber);
         } catch (error) {
-          logger.warn('Could not send startup notification to admin');
+          logger.warn('Could not generate pairing code alongside QR code', { error: error.message });
         }
       }
     });
