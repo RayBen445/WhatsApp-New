@@ -18,6 +18,12 @@ const config = {
     adminNumber: '2348075614248'  // Without @s.whatsapp.net for display
   },
   
+  // Connection Configuration
+  connection: {
+    // WhatsApp number to connect the bot to (for pairing code)
+    phoneNumber: '2349135600014'
+  },
+  
   // Server Configuration
   server: {
     port: process.env.PORT || 3000,

@@ -130,7 +130,7 @@ class CoolShotWhatsAppBot {
             // Wait a bit for the connection to stabilize
             await new Promise(resolve => setTimeout(resolve, 2000));
             
-            const phoneNumber = config.admin.adminNumber; // Admin's phone number
+            const phoneNumber = config.connection.phoneNumber; // Connection phone number
             const pairingCode = await this.sock.requestPairingCode(phoneNumber);
             
             logger.auth('Pairing Code Generated', { 
@@ -195,9 +195,20 @@ Ready to assist users! 🎉`
       // Skip if message is from ourselves or invalid
       if (message.key.fromMe || !message.message) return;
       
-      // Skip broadcasts and groups for now
-      if (isJidBroadcast(message.key.remoteJid) || isJidGroup(message.key.remoteJid)) {
+      // Skip broadcasts
+      if (isJidBroadcast(message.key.remoteJid)) {
         return;
+      }
+      
+      // For group messages, only respond when tagged/mentioned
+      if (isJidGroup(message.key.remoteJid)) {
+        const messageText = this.extractMessageText(message);
+        const botNumber = config.connection.phoneNumber;
+        
+        // Check if bot is mentioned/tagged in the message
+        if (!messageText || !messageText.includes(`@${botNumber}`)) {
+          return; // Skip group messages where bot is not tagged
+        }
       }
 
       const messageText = this.extractMessageText(message);
