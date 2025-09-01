@@ -67,6 +67,12 @@ The bot recognizes **2348075614248** as the primary admin with full management p
    # Edit .env with your settings (optional)
    ```
 
+   **Key Configuration Options:**
+   - `AI_API_KEY` - API key for AI services (default: "gifted" for free tier)
+   - `PHONE_NUMBER` - WhatsApp number to connect the bot to (format: country code + number without + symbol)
+   - `PORT` - Server port (default: 3000)
+   - `LOG_LEVEL` - Logging level (default: info)
+
 4. **Start the bot**
    ```bash
    npm start

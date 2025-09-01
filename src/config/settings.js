@@ -21,7 +21,8 @@ const config = {
   // Connection Configuration
   connection: {
     // WhatsApp number to connect the bot to (for pairing code)
-    phoneNumber: '2349135600014'
+    // Can be configured via PHONE_NUMBER environment variable
+    phoneNumber: process.env.PHONE_NUMBER || '2349135600014'
   },
   
   // Server Configuration
