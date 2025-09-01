@@ -1,0 +1,41 @@
+{
+  "name": "coolshot-ai-whatsapp",
+  "version": "1.0.0",
+  "description": "Cool Shot AI WhatsApp Bot - Multi-role intelligent assistant",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "ai",
+    "coolshot",
+    "baileys",
+    "assistant",
+    "multi-role"
+  ],
+  "author": "Cool Shot Systems",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.8",
+    "axios": "^1.10.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.0",
+    "mime-types": "^2.1.35",
+    "pino": "^9.0.0",
+    "qrcode-terminal": "^0.12.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
