@@ -2,7 +2,7 @@
   "name": "coolshot-ai-whatsapp",
   "version": "1.0.0",
   "description": "Cool Shot AI WhatsApp Bot - Multi-role intelligent assistant",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
