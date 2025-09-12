@@ -216,23 +216,10 @@ class CoolShotWhatsAppBot {
           console.log('📱 WhatsApp bot is now ONLINE and ready!');
           console.log('🤖 Cool Shot AI is active and waiting for messages...');
           console.log('✅'.repeat(20) + '\n');
-          
-          // Send startup notification to admin
-          try {
-            await this.sock.sendMessage(config.admin.primaryAdmin, {
-              text: `🚀 *Cool Shot AI is Online!*
-
-✅ WhatsApp connection established
-🤖 Bot version: ${config.bot.version}
-⏰ Started at: ${new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}
-🔗 Connected using dual login support (QR + Pairing Code)
-
-Ready to assist users! 🎉`
-            });
-          } catch (error) {
-            logger.warn('Could not send startup notification to admin');
-          }
         }
+
+        // Send startup notification to admin for all successful connections
+        await this._sendStartupNotification();
       }
 
       // Handle QR code updates (for terminal display)
@@ -578,6 +565,25 @@ The command \`/${command}\` is not recognized.
 
     await this.sock.sendMessage(userId, { text: unknownMessage });
     logger.command('Unknown command executed', { userId, command });
+  }
+
+  // Send startup notification to the admin
+  async _sendStartupNotification() {
+    try {
+      await this.sock.sendMessage(config.admin.primaryAdmin, {
+        text: `🚀 *Cool Shot AI is Online!*
+
+✅ WhatsApp connection established
+🤖 Bot version: ${config.bot.version}
+⏰ Started at: ${new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}
+🔗 Connected using dual login support (QR + Pairing Code)
+
+Ready to assist users! 🎉`
+      });
+      logger.system('Sent startup notification to admin');
+    } catch (error) {
+      logger.warn('Could not send startup notification to admin', { error: error.message });
+    }
   }
 
   // Graceful shutdown
